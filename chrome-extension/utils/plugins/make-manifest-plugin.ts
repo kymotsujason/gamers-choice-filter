@@ -48,7 +48,7 @@ export default (config: { outDir: string }): PluginOption => {
     const manifestPath = resolve(to, 'manifest.json');
 
     if (IS_DEV) {
-      addRefreshContentScript(manifest);
+      //addRefreshContentScript(manifest);
     }
 
     writeFileSync(manifestPath, ManifestParser.convertManifestToString(manifest, IS_FIREFOX));
@@ -56,7 +56,7 @@ export default (config: { outDir: string }): PluginOption => {
     const refreshFileString = readFileSync(refreshFilePath, 'utf-8');
 
     if (IS_DEV) {
-      writeFileSync(resolve(to, 'refresh.js'), withHMRId(refreshFileString));
+      //writeFileSync(resolve(to, 'refresh.js'), withHMRId(refreshFileString));
     }
 
     colorLog(`Manifest file copy complete: ${manifestPath}`, 'success');
