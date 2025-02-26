@@ -39,7 +39,7 @@ const manifest = {
     '*://*.digitaltrends.com/*',
     '*://*.gamesradar.com/*',
   ],
-  permissions: ['storage', 'tabs'],
+  permissions: ['storage', 'activeTab'],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',
