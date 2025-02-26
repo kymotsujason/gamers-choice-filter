@@ -4,6 +4,10 @@ Your Reviews, Your Rules. Tired of sifting through endless game reviews that jus
 
 If you have any bugs to report or features to request, create an issue [here](https://github.com/kymotsujason/gamers-choice-filter/issues/new)
 
+![alt text](/previews/image1.png "Preview")
+
+[More images here](https://github.com/kymotsujason/gamers-choice-filter/tree/master/previews)
+
 ## Getting Started
 
 You can install the chrome extension through the Chrome Web Store here (pending review) or locally here (pending upload).
