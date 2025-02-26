@@ -12,6 +12,23 @@ If you have any bugs to report or features to request, create an issue [here](ht
 
 You can install the chrome extension through the Chrome Web Store here (pending review) or locally here (pending upload).
 
+Currently supported websites:
+
+* But Why Tho?
+* Digital Trends
+* Dot Esports
+* Game Critics
+* Games Radar+
+* Gaming Trend
+* IGN
+* Kotaku
+* MMORPG
+* PC Gamer
+* Player 2
+* Polygon
+* Wccftech
+* Windows Central
+
 ### For developers
 
 [See here](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite?tab=readme-ov-file#getting-started) for in-depth and extensive instructions
@@ -41,4 +58,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* [Jonghakseo](https://github.com/Jonghakseo)'s chrome extension boilerplate with a working content script
+* [Jonghakseo](https://github.com/Jonghakseo) chrome extension boilerplate with a working content script
