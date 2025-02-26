@@ -1,10 +1,5 @@
-// background.js
-
-// Import initial filtered authors data
-// Adjust the import path as needed based on your project structure
 import { filteredAuthors as initialFilteredAuthors } from './data/filteredAuthors';
 import type { SiteConfig } from './data/filteredAuthors';
-// Store per-tab blocked counts
 const perTabBlockedCounts: { [key: number]: number } = {};
 
 interface authorPreferences {
@@ -15,7 +10,7 @@ interface authorPreferences {
 function updateDEIAuthorPreferences(
   filteredAuthorsData: SiteConfig[],
   authorPreferences: authorPreferences,
-  //deiAuthorsBackup,
+  //deiAuthorsBackup, disabled for now due to complications
 ) {
   const updatedAuthorPreferences = { ...authorPreferences };
   //const updatedDEIAuthorsBackup = { ...deiAuthorsBackup };
@@ -57,7 +52,7 @@ chrome.runtime.onInstalled.addListener(details => {
       enableDEIFiltering: false,
       authorPreferences: {},
       sites: {},
-      filteredAuthors: initialFilteredAuthors, // Ensure this is correctly imported
+      filteredAuthors: initialFilteredAuthors,
     };
 
     // Set default settings in chrome.storage.local
@@ -65,7 +60,6 @@ chrome.runtime.onInstalled.addListener(details => {
       console.log('Storage initialized with default settings.');
     });
 
-    // Optionally open the options page on first install
     chrome.runtime.openOptionsPage();
   } else if (details.reason === 'update') {
     // Fetch current data from chrome.storage.local
@@ -78,7 +72,7 @@ chrome.runtime.onInstalled.addListener(details => {
         const sites = items.sites || [];
         initialFilteredAuthors.forEach(siteConfig => {
           if (!sites[siteConfig.siteKey]) {
-            sites[siteConfig.siteKey] = { enabled: true }; // Add new site to sites map
+            sites[siteConfig.siteKey] = { enabled: true };
           }
         });
         chrome.storage.local.set({ sites: sites }, () => {
@@ -107,11 +101,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const text = count > 0 ? count.toString() : '';
     const tabId = sender.tab!.id;
 
-    // Update the badge text
     chrome.action.setBadgeText({ text: text, tabId: tabId });
-    // Optional: Set the badge background color
     chrome.action.setBadgeBackgroundColor({ color: '#282828', tabId: tabId });
-    // Optional: Set the badge background color
     chrome.action.setBadgeTextColor({ color: '#F2F2F2', tabId: tabId });
   } else if (message.action === 'updatePerPageBlockedCount') {
     const tabId = sender.tab ? sender.tab.id : null;
@@ -137,7 +128,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = message.tabId;
     const count = perTabBlockedCounts[tabId] || 0;
     sendResponse({ count });
-    // Return true to indicate we will send a response asynchronously
     return true;
   }
 });
@@ -151,7 +141,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   }
 });
 
-// Not sure if this is necessary, but it's included for completeness
+// Not sure if this is necessary
 //chrome.tabs.onRemoved.addListener(tabId => {
 //  chrome.action.setBadgeText({ text: '', tabId: tabId });
 //  delete perTabBlockedCounts[tabId];

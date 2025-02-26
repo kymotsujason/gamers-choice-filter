@@ -26,13 +26,13 @@ const FullscreenPopup: React.FC = () => {
   };
 
   return (
-    <div className="bg-blue-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded shadow-lg max-w-lg w-full p-6">
-        <h1 className="text-3xl font-bold mb-4 text-center">Gamer's Choice Filter</h1>
-        <h2 className="text-xl font-semibold mb-2 text-center">
+    <div className="bg-blue-700 flex items-center justify-center p-4 h-[264px]">
+      <div className="bg-gray-900 rounded shadow-lg w-full h-full p-6">
+        <h1 className="text-3xl text-white font-bold mb-4 text-center">Gamer's Choice Filter</h1>
+        <h2 className="text-xl text-white font-semibold mb-2 text-center">
           {enableDEIFiltering ? 'DEI' : 'Blocked Reviewer'} Detected
         </h2>
-        <p className="mb-2 text-center">
+        <p className="mb-2 text-white text-center">
           This page was written by a {enableDEIFiltering ? 'DEI' : 'Blocked'} Reviewer and may contain related
           content/bias. Continue?
         </p>
@@ -50,7 +50,7 @@ const FullscreenPopup: React.FC = () => {
           </button>
         </div>
         {windowWillClose ? (
-          <p className="mt-2 text-center text-xs">
+          <p className="mt-2 text-black text-center text-xs">
             Warning: This tab has no previous history, pressing no will close the tab
           </p>
         ) : null}

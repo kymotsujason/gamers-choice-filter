@@ -14,6 +14,9 @@ function loadFullscreenPopup() {
   root.style.left = '50%';
   root.style.top = '50%';
   root.style.transform = 'translate(-272px, -144px)';
+  root.style.width = '544px';
+  root.style.height = '264px';
+  root.style.fontSize = '14px';
 
   document.body.append(root);
 
@@ -51,6 +54,7 @@ function loadPopup() {
   root.style.position = 'fixed';
   root.style.right = '3%';
   root.style.top = '3%';
+  root.style.zIndex = '10000000';
 
   document.body.append(root);
 
@@ -90,6 +94,7 @@ function loadPopup() {
   let siteSettings: { [key: string]: SiteSettings } = {};
   let showFullscreenPopup = true;
   let showPopup = true;
+  const fontSize = window.getComputedStyle(document.documentElement).fontSize;
 
   function loadData() {
     chrome.storage.local.get(['filteredAuthors', 'authorPreferences', 'sites'], items => {
@@ -153,27 +158,33 @@ function loadPopup() {
         const authorPrefKey = `${siteKey}:${authorName}`;
         const shouldFilter = authorPreferences[authorPrefKey] === true;
 
-        if (shouldFilter) {
-          if (siteSettings[siteKey].enableFullscreenPopup && showFullscreenPopup) {
-            document.body.style.visibility = 'hidden';
-            (fullscreenPopup as HTMLElement).style.visibility = 'visible';
-            (popup as HTMLElement).style.visibility = 'hidden';
-          } else {
-            document.body.style.visibility = 'visible';
-            (fullscreenPopup as HTMLElement).style.visibility = 'hidden';
-            if (
-              siteSettings[siteKey].enablePopup &&
-              (fullscreenPopup as HTMLElement).style.visibility === 'hidden' &&
-              showPopup
-            ) {
-              (popup as HTMLElement).style.visibility = 'visible';
-            } else {
+        for (let i = 0; i < siteConfig.articleDOMSelector.length; i++) {
+          const articleDOM = document.querySelector(siteConfig.articleDOMSelector[i]);
+          if (shouldFilter) {
+            if (siteSettings[siteKey].enableFullscreenPopup && showFullscreenPopup) {
+              document.documentElement.style.fontSize = '14px';
+              (articleDOM as HTMLElement).style.display = 'none';
+              (fullscreenPopup as HTMLElement).style.visibility = 'visible';
               (popup as HTMLElement).style.visibility = 'hidden';
+            } else {
+              document.documentElement.style.fontSize = fontSize;
+              (articleDOM as HTMLElement).style.display = 'inherit';
+              (fullscreenPopup as HTMLElement).style.visibility = 'hidden';
+              if (
+                siteSettings[siteKey].enablePopup &&
+                (fullscreenPopup as HTMLElement).style.visibility === 'hidden' &&
+                showPopup
+              ) {
+                (popup as HTMLElement).style.visibility = 'visible';
+              } else {
+                (popup as HTMLElement).style.visibility = 'hidden';
+              }
             }
+          } else {
+            document.documentElement.style.fontSize = fontSize;
+            (articleDOM as HTMLElement).style.display = 'inherit';
+            (fullscreenPopup as HTMLElement).style.visibility = 'hidden';
           }
-        } else {
-          document.body.style.visibility = 'visible';
-          (fullscreenPopup as HTMLElement).style.visibility = 'hidden';
         }
       }
     }

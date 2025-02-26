@@ -38,21 +38,30 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ selectedSiteKey, selectedAu
   useEffect(() => {
     // Load settings and filtered authors on mount
     Promise.all([getSettings(), getFilteredAuthors()]).then(([settingsData, authorsData]) => {
-      setSettings(settingsData);
-      setFilteredAuthors(authorsData);
-      if (authorsData.length > 0) {
-        // Handle selectedSiteKey
+      chrome.storage.local.get(['selectedSiteKey'], data => {
+        const storedSiteKeyIndex = data.selectedSiteKey;
+        setSettings(settingsData);
+        setFilteredAuthors(authorsData);
         if (selectedSiteKey) {
-          const index = authorsData.findIndex(siteConfig => siteConfig.siteKey === selectedSiteKey);
-          if (index !== -1) {
-            setSelectedSiteIndex(index);
-          } else {
-            setSelectedSiteIndex(0);
+          if (authorsData.length > 0) {
+            if (selectedSiteKey) {
+              const index = authorsData.findIndex(siteConfig => siteConfig.siteKey === selectedSiteKey);
+              if (index !== -1) {
+                setSelectedSiteIndex(index);
+                chrome.storage.local.set({ selectedSiteKey: index });
+              } else {
+                setSelectedSiteIndex(0);
+                chrome.storage.local.set({ selectedSiteKey: 0 });
+              }
+            } else {
+              setSelectedSiteIndex(0);
+              chrome.storage.local.set({ selectedSiteKey: 0 });
+            }
           }
         } else {
-          setSelectedSiteIndex(0);
+          setSelectedSiteIndex(storedSiteKeyIndex || 0);
         }
-      }
+      });
     });
   }, [selectedSiteKey]);
 
@@ -78,6 +87,7 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ selectedSiteKey, selectedAu
 
   const handleSiteChange = (event: SelectChangeEvent<number>) => {
     setSelectedSiteIndex(event.target.value as number);
+    chrome.storage.local.set({ selectedSiteKey: event.target.value as number });
   };
 
   const updateSiteSettings = async (
@@ -186,6 +196,7 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ selectedSiteKey, selectedAu
               updateSiteSettings={updateSiteSettings}
               updateFilteredAuthors={updateFilteredAuthors}
               selectedAuthor={selectedAuthor}
+              selectedSiteKey={selectedSiteKey}
               onAuthorFocus={onAuthorFocus}
               enableDEIFiltering={settings.enableDEIFiltering}
             />

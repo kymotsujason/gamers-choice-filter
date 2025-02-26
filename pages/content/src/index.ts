@@ -1,20 +1,79 @@
-// contentScript.ts
 import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
 
 (function () {
   const hostname = window.location.hostname;
-
-  // Variables to store data
   let filteredAuthorsData: SiteConfig[] = [];
   let authorPreferences: { [key: string]: boolean } = {};
   let siteSettings: { [key: string]: { enabled: boolean } } = {};
-  let lastBadgeCount = 0;
   let cumulativeHiddenCount = 0;
   let perPageBlockedCount = 0;
-  const dev = false; // Set to true for development purposes
-  let authorArr = {};
+  const dev = false;
+  let authorArr: { [key: string]: string[] } = {};
 
-  // Initialize statistics when the content script runs
+  let currentObservers: MutationObserver[] = [];
+  let targetPollingObserver: MutationObserver | null = null;
+
+  function debounce<T extends (...args: unknown[]) => void>(func: T, delay: number): (...args: Parameters<T>) => void {
+    let timeoutId: number | undefined;
+    return (...args: Parameters<T>) => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = window.setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  }
+
+  function cleanupObservers() {
+    currentObservers.forEach(observer => observer.disconnect());
+    currentObservers = [];
+    if (targetPollingObserver) {
+      targetPollingObserver.disconnect();
+      targetPollingObserver = null;
+    }
+  }
+
+  function reinitializeScript() {
+    cleanupObservers();
+    //console.log('Reinitializing content script for a new page/route...');
+    loadData();
+  }
+  const debouncedReinitialize = debounce(reinitializeScript, 100);
+
+  // SPA Navigation Handlers
+  window.addEventListener('popstate', debouncedReinitialize);
+  const originalPushState = history.pushState;
+  history.pushState = function (...args) {
+    originalPushState.apply(history, args);
+    debouncedReinitialize();
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      console.log('Page became visible, checking for target elements...');
+      debouncedReinitialize();
+    }
+  });
+
+  // Last resort polling for SPA
+  let lastUrl = window.location.href;
+  setInterval(() => {
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href;
+      console.log('URL change detected via polling. Reinitializing...');
+      debouncedReinitialize();
+    }
+  }, 500);
+
+  function getStorageData<T>(keys: string | string[]): Promise<T> {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get(keys, result => {
+        if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+        resolve(result as T);
+      });
+    });
+  }
+
   function initializeStatistics() {
     if (dev) {
       chrome.storage.local.get(['authorArray'], data => {
@@ -24,65 +83,73 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
       });
     }
     chrome.storage.local.get(['blockedPostsOverTime', 'blockedPostsPerSite', 'lifetimeBlockedCount'], data => {
-      if (!data.blockedPostsOverTime) {
-        chrome.storage.local.set({ blockedPostsOverTime: [] });
-      }
-      if (!data.blockedPostsPerSite) {
-        chrome.storage.local.set({ blockedPostsPerSite: {} });
-      }
-      if (!data.lifetimeBlockedCount) {
-        chrome.storage.local.set({ lifetimeBlockedCount: 0 });
-      }
+      if (!data.blockedPostsOverTime) chrome.storage.local.set({ blockedPostsOverTime: [] });
+      if (!data.blockedPostsPerSite) chrome.storage.local.set({ blockedPostsPerSite: {} });
+      if (!data.lifetimeBlockedCount) chrome.storage.local.set({ lifetimeBlockedCount: 0 });
     });
   }
 
-  function loadData() {
-    if (dev) {
-      chrome.storage.local.get(['authorArray'], items => {
-        authorArr = items.authorArray || {};
-      });
-    }
-    chrome.storage.local.get(['filteredAuthors', 'authorPreferences', 'sites'], items => {
+  async function loadData() {
+    try {
+      const items = await getStorageData<{
+        filteredAuthors?: SiteConfig[];
+        authorPreferences?: { [key: string]: boolean };
+        sites?: { [key: string]: { enabled: boolean } };
+      }>(['filteredAuthors', 'authorPreferences', 'sites']);
+
       filteredAuthorsData = items.filteredAuthors || [];
       authorPreferences = items.authorPreferences || {};
       siteSettings = items.sites || {};
 
-      // Determine if current site is supported
+      if (dev) {
+        const itemsDev = await getStorageData<{ authorArray?: { [siteKey: string]: string[] } }>(['authorArray']);
+        authorArr = itemsDev.authorArray || {};
+      }
+
       const siteConfig = filteredAuthorsData.find(site => site.hostnames && site.hostnames.includes(hostname));
 
-      if (!siteConfig) return; // Site not supported
+      if (!siteConfig) {
+        console.log('Site not supported');
+        return;
+      }
 
       const siteEnabled = siteSettings[siteConfig.siteKey]?.enabled !== false;
-
-      // Proceed if filtering is enabled
       if (siteEnabled) {
         waitForObserverTarget(siteConfig);
       }
-    });
+    } catch (err) {
+      console.error('Error loading storage data:', err);
+    }
   }
 
   function waitForObserverTarget(siteConfig: SiteConfig) {
     const observerTargetSelector = siteConfig.observerTargetSelector || 'body';
 
-    function checkExist() {
-      const targetNode = document.querySelector(observerTargetSelector);
-      if (targetNode) {
+    function quickCheck() {
+      const targetNodes = document.querySelectorAll(observerTargetSelector);
+      if (targetNodes.length > 0) {
+        if (targetPollingObserver) {
+          targetPollingObserver.disconnect();
+          targetPollingObserver = null;
+        }
         initContentScript(siteConfig);
-      } else {
-        requestAnimationFrame(checkExist);
       }
     }
+    requestAnimationFrame(quickCheck);
 
-    requestAnimationFrame(checkExist);
+    if (!targetPollingObserver) {
+      targetPollingObserver = new MutationObserver(() => quickCheck());
+      targetPollingObserver.observe(document.body, { childList: true, subtree: true });
+    }
   }
 
   function initContentScript(siteConfig: SiteConfig) {
-    perPageBlockedCount = 0; // Reset per-page blocked count
-    cumulativeHiddenCount = 0; // Reset cumulative count for this page load
+    perPageBlockedCount = 0;
+    cumulativeHiddenCount = 0;
+
     const { authors } = siteConfig;
     const siteAuthors = authors || [];
-
-    if (siteAuthors.length === 0) return; // No authors to filter
+    if (siteAuthors.length === 0) return;
 
     hideFilteredPosts(siteConfig, siteAuthors);
     observeDOM(siteConfig, siteAuthors);
@@ -90,31 +157,28 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
 
   function hideFilteredPosts(siteConfig: SiteConfig, siteAuthors: Author[]) {
     const { siteKey, postSelector, authorSelector, hidden } = siteConfig;
-    let hiddenPostCount = 0; // Number of posts hidden in this invocation
+    let hiddenPostCount = 0;
 
     for (let i = 0; i < postSelector.length; i++) {
       const postSelectorElement = postSelector[i];
       const authorSelectorElement = authorSelector[i];
       const posts = document.querySelectorAll(postSelectorElement);
+
       posts.forEach(post => {
         const authorElement = post.querySelector(authorSelectorElement);
         if (authorElement) {
           const authorName = authorElement.textContent!.trim();
+
           if (dev) {
-            // @ts-expect-error Dev stuff, could change type at any point
             if (!authorArr[siteKey]) {
-              // @ts-expect-error Dev stuff, could change type at any point
               authorArr[siteKey] = [];
             }
-            // @ts-expect-error Dev stuff, could change type at any point
             if (!authorArr[siteKey].includes(authorName)) {
-              // @ts-expect-error Dev stuff, could change type at any point
               authorArr[siteKey].push(authorName);
             }
           }
-          // Check if the author is in the site's authors list
-          const authorInList = siteAuthors.find(author => author.name === authorName);
 
+          const authorInList = siteAuthors.find(author => author.name === authorName);
           if (authorInList) {
             const authorPrefKey = `${siteKey}:${authorName}`;
             const shouldFilter = authorPreferences[authorPrefKey] === true;
@@ -123,12 +187,12 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
               if (hidden[i]) {
                 if ((post as HTMLElement).style.display !== 'none') {
                   (post as HTMLElement).style.display = 'none';
-                  hiddenPostCount++; // Increment the count
+                  hiddenPostCount++;
                 }
               } else {
                 if ((post as HTMLElement).style.visibility !== 'hidden') {
                   (post as HTMLElement).style.visibility = 'hidden';
-                  hiddenPostCount++; // Increment the count
+                  hiddenPostCount++;
                 }
               }
             } else {
@@ -146,10 +210,9 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
         }
       });
     }
+
     if (dev) {
-      // @ts-expect-error Dev stuff, could change type at any point
       console.log(authorArr[siteKey]);
-      // @ts-expect-error Dev stuff, could change type at any point
       authorArr[siteKey].sort();
       chrome.storage.local.set({ authorArray: authorArr });
     }
@@ -158,29 +221,26 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
       cumulativeHiddenCount += hiddenPostCount;
       perPageBlockedCount += hiddenPostCount;
 
-      // Send per-page blocked count to background script
+      updateBadge(cumulativeHiddenCount);
+
       chrome.runtime.sendMessage({
         action: 'updatePerPageBlockedCount',
         count: perPageBlockedCount,
       });
 
-      // Update cumulativeHiddenCount in storage
       chrome.storage.local.set({ cumulativeHiddenCount });
 
-      // Update lifetimeBlockedCount
       chrome.storage.local.get('lifetimeBlockedCount', data => {
         const lifetimeBlockedCount = (data.lifetimeBlockedCount || 0) + hiddenPostCount;
         chrome.storage.local.set({ lifetimeBlockedCount });
       });
 
-      const timestamp = new Date().toISOString(); // Current time in ISO format
+      const timestamp = new Date().toISOString();
 
-      // Update blockedPostsOverTime
       chrome.storage.local.get(['blockedPostsOverTime'], data => {
         let blockedPostsOverTime = data.blockedPostsOverTime || [];
         blockedPostsOverTime.push({ timestamp, count: hiddenPostCount });
 
-        // Keep only data from the last 30 days
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         blockedPostsOverTime = blockedPostsOverTime.filter((entry: BlockedPostTimeCount) => {
@@ -190,40 +250,34 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
         chrome.storage.local.set({ blockedPostsOverTime });
       });
 
-      // Update blocked posts per site
       chrome.storage.local.get(['blockedPostsPerSite'], data => {
         const blockedPostsPerSite = data.blockedPostsPerSite || {};
         blockedPostsPerSite[siteKey] = (blockedPostsPerSite[siteKey] || 0) + hiddenPostCount;
         chrome.storage.local.set({ blockedPostsPerSite });
       });
-
-      // Update badge
-      updateBadge(cumulativeHiddenCount);
     }
   }
 
   function updateBadge(count: number) {
-    if (count !== lastBadgeCount) {
-      lastBadgeCount = count;
-      // Update badge
-      chrome.runtime.sendMessage({ action: 'updateBadge', count });
-    }
+    chrome.runtime.sendMessage({ action: 'updateBadge', count });
   }
 
   function observeDOM(siteConfig: SiteConfig, siteAuthors: Author[]) {
-    const { observerTargetSelector } = siteConfig;
-    const targetNode = document.querySelector(observerTargetSelector || 'body');
-    if (!targetNode) return;
+    const targetNodes = document.querySelectorAll(siteConfig.observerTargetSelector || 'body');
+    if (!targetNodes.length) return;
+
+    const debouncedHideFilteredPosts = debounce(() => {
+      hideFilteredPosts(siteConfig, siteAuthors);
+    }, 100);
 
     const config = { childList: true, subtree: true };
-    const observer = new MutationObserver(() => {
-      hideFilteredPosts(siteConfig, siteAuthors);
+    targetNodes.forEach(node => {
+      const observer = new MutationObserver(debouncedHideFilteredPosts);
+      observer.observe(node, config);
+      currentObservers.push(observer);
     });
-
-    observer.observe(targetNode, config);
   }
 
-  // Watch for changes in chrome.storage
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local') {
       if (changes.filteredAuthors || changes.authorPreferences || changes.sites) {
@@ -232,7 +286,7 @@ import type { SiteConfig, Author, BlockedPostTimeCount } from './data/types';
     }
   });
 
-  // Initialize statistics and load data
+  // Start Everything
   initializeStatistics();
   loadData();
 })();

@@ -9,12 +9,10 @@ import About from './components/About';
 import logo from './assets/icon-128.png';
 
 const Options: React.FC = () => {
-  const [, setCurrentTab] = useState('general');
   const [selectedSiteKey, setSelectedSiteKey] = useState<string | undefined>(undefined);
   const [selectedAuthor, setSelectedAuthor] = useState<string | undefined>(undefined);
 
-  const handleSetCurrentTab = (tab: string, siteKey?: string, authorName?: string) => {
-    setCurrentTab(tab);
+  const handleSetCurrentTab = (siteKey?: string, authorName?: string) => {
     if (siteKey) {
       setSelectedSiteKey(siteKey);
     }

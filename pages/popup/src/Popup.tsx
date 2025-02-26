@@ -177,8 +177,6 @@ const Popup: FC = () => {
     const filteredAuthorsData = await getFilteredAuthors();
 
     if (checked) {
-      // Enabling DEI Filtering
-
       // Save current settings for sites and DEI authors
       const currentSitesBackup = { ...settings.sites };
       const currentAuthorPreferencesBackup = { ...settings.authorPreferences };
@@ -194,7 +192,7 @@ const Popup: FC = () => {
         }
 
         // Enable site filtering
-        updatedSites[siteConfig.siteKey] = { enabled: true };
+        updatedSites[siteConfig.siteKey] = { enabled: true, enableFullscreenPopup: true, enablePopup: true };
 
         siteConfig.authors.forEach(author => {
           const authorPrefKey = `${siteConfig.siteKey}:${author.name}`;
@@ -218,8 +216,6 @@ const Popup: FC = () => {
         deiAuthorsBackup: currentAuthorPreferencesBackup,
       };
     } else {
-      // Disabling DEI Filtering
-
       // Retrieve backups
       const deiSitesBackup = settings.deiSitesBackup || {};
       const deiAuthorsBackup = settings.deiAuthorsBackup || {};
@@ -254,7 +250,7 @@ const Popup: FC = () => {
         ...updatedSettings,
         sites: restoredSites,
         authorPreferences: restoredAuthorPreferences,
-        deiSitesBackup: undefined, // Clear backups
+        deiSitesBackup: undefined, // Restoring settings is complicated
         deiAuthorsBackup: undefined,
       };
     }
@@ -269,18 +265,15 @@ const Popup: FC = () => {
 
   return (
     <Box sx={{ width: 320, minHeight: 400 }}>
-      {/* NAVBAR at the top */}
       <AppBar position="static" sx={{ bgcolor: '#000000' }}>
         <Toolbar>
           <IconButton edge="start" disabled={true}>
             <img src={logo} alt="logo" width={24} height={24} />
           </IconButton>
-          {/* Left side: your logo or extension name */}
           <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
             Gamer's Choice Filter
           </Typography>
 
-          {/* Right side: Settings button pointing to the options page */}
           <IconButton edge="end" color="inherit" onClick={handleOpenKofi}>
             <img src={kofi} alt="logo" width={24} height={24} />
           </IconButton>
@@ -290,7 +283,6 @@ const Popup: FC = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Main content below the navbar */}
       <Box sx={{ p: 1, textAlign: 'center' }}>
         <Box sx={{ mt: 1 }}>
           <Typography variant="caption" sx={{ mt: 1, color: 'lightgray', overflow: 'auto', whiteSpace: 'nowrap' }}>

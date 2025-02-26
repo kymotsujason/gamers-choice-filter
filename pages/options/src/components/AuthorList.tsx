@@ -22,6 +22,7 @@ interface AuthorListProps {
   authors: Author[];
   updateAuthors: (updatedAuthors: Author[]) => void;
   selectedAuthor?: string;
+  selectedSiteKey?: string;
   onAuthorFocus?: () => void;
   enableDEIFiltering: boolean;
 }
@@ -31,6 +32,7 @@ const AuthorList: React.FC<AuthorListProps> = ({
   authors,
   updateAuthors,
   selectedAuthor,
+  selectedSiteKey,
   onAuthorFocus,
   enableDEIFiltering,
 }) => {
@@ -48,22 +50,33 @@ const AuthorList: React.FC<AuthorListProps> = ({
   }, []);
 
   useEffect(() => {
-    if (selectedAuthor) {
-      const authorKey = `${siteKey}-${selectedAuthor}`;
+    let retryCount = 0;
+    const maxRetries = 10;
+
+    const scrollToAuthor = () => {
+      const authorKey = `${selectedSiteKey}-${selectedAuthor}`;
       const authorElement = authorRefs.current[authorKey];
+
       if (authorElement) {
         authorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         authorElement.style.backgroundColor = '#767676';
         setTimeout(() => {
           authorElement.style.backgroundColor = '';
         }, 2000);
+
+        if (onAuthorFocus) {
+          onAuthorFocus();
+        }
+      } else if (retryCount < maxRetries) {
+        retryCount += 1;
+        setTimeout(scrollToAuthor, 10);
       }
-      // Call the onAuthorFocus callback to reset selectedAuthor
-      if (onAuthorFocus) {
-        onAuthorFocus();
-      }
+    };
+
+    if (selectedAuthor) {
+      scrollToAuthor();
     }
-  }, [onAuthorFocus, selectedAuthor, siteKey]);
+  }, [onAuthorFocus, selectedAuthor, selectedSiteKey]);
 
   useEffect(() => {
     // Listen for changes in chrome.storage.local
@@ -136,7 +149,7 @@ const AuthorList: React.FC<AuthorListProps> = ({
   return (
     <>
       <TextField
-        label="Search Authors"
+        label="Search Reviewers"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
         variant="outlined"
@@ -167,8 +180,7 @@ const AuthorList: React.FC<AuthorListProps> = ({
                       edge="end"
                       aria-label="delete"
                       onClick={() => handleRemoveAuthor(author.name)}
-                      disabled={isToggleDisabled} // Disable delete if toggle is disabled
-                    >
+                      disabled={isToggleDisabled}>
                       <DeleteIcon />
                     </IconButton>
                   </span>
@@ -181,7 +193,7 @@ const AuthorList: React.FC<AuthorListProps> = ({
                     <Switch
                       checked={isFiltered}
                       onChange={() => handleToggle(author.name)}
-                      disabled={isToggleDisabled} // Disable the switch
+                      disabled={isToggleDisabled}
                     />
                   }
                   label="Filter"
@@ -193,7 +205,7 @@ const AuthorList: React.FC<AuthorListProps> = ({
       </List>
       <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
         <TextField
-          label="Add New Author"
+          label="Add New Reviewer"
           value={newAuthorName}
           onChange={e => setNewAuthorName(e.target.value)}
           variant="outlined"

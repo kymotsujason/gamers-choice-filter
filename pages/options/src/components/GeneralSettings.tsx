@@ -46,8 +46,6 @@ const GeneralSettings: React.FC = () => {
 
       if (checked) {
         setEnabled(true);
-        // Enabling DEI Filtering
-
         // Save current settings for sites and DEI authors
         const currentSitesBackup = { ...settings.sites };
         const currentAuthorPreferencesBackup = { ...settings.authorPreferences };
@@ -90,9 +88,7 @@ const GeneralSettings: React.FC = () => {
         };
       } else {
         setEnabled(false);
-        // Disabling DEI Filtering
-
-        // Retrieve backups
+        // Retrieve backups - disabled sites for now
         //const deiSitesBackup = settings.deiSitesBackup || {};
         const deiAuthorsBackup = settings.deiAuthorsBackup || {};
 

@@ -10,6 +10,7 @@ export interface SiteConfig {
   authorSelector: string[];
   observerTargetSelector?: string;
   articleAuthorSelector: string;
+  articleDOMSelector: string[];
   hidden: boolean[];
   authors: Author[];
 }

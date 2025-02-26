@@ -1,13 +1,43 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import type { FC } from 'react';
-import type React from 'react';
 import { useEffect, useState } from 'react';
+import type { SelectChangeEvent } from '@mui/material';
 import { Box, Typography, Select, MenuItem } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface BlockedPostEntry {
   timestamp: string;
   count: number;
 }
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: {
+    payload: {
+      count: number;
+    };
+  }[];
+  label?: string;
+}
+
+const CustomLineTooltip: FC<CustomTooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length > 0) {
+    const data = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: 'black',
+          border: '1px solid #ccc',
+          padding: '8px',
+          color: 'white',
+        }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>{label}</p>
+        <p style={{ margin: 0 }}>Blocked Posts: {data.count}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const OverTimeStatisticsTab: FC = () => {
   const [timeRange, setTimeRange] = useState('7');
@@ -17,29 +47,22 @@ const OverTimeStatisticsTab: FC = () => {
     chrome.storage.local.get(['blockedPostsOverTime'], data => {
       const overTimeData: BlockedPostEntry[] = data.blockedPostsOverTime || [];
 
-      // Filter data to only entries within the selected time window
       const days = parseInt(timeRange, 10);
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
 
       const filtered = overTimeData.filter(entry => new Date(entry.timestamp) >= cutoff);
-
       setBlockedPostsOverTime(filtered);
     });
   }, [timeRange]);
 
-  const handleRangeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleRangeChange = (event: SelectChangeEvent<string>) => {
     setTimeRange(event.target.value as string);
   };
 
-  // ---------------------------------------------------------------------------
-  // 1) Create a list of date strings for each day in the range.
-  //    For example, if timeRange is "7", we make an array of the last 7 days.
-  // ---------------------------------------------------------------------------
   const days = parseInt(timeRange, 10);
   const today = new Date();
 
-  // We'll generate dates from oldest to newest:
   const dateLabels: string[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
@@ -47,17 +70,11 @@ const OverTimeStatisticsTab: FC = () => {
     dateLabels.push(d.toLocaleDateString());
   }
 
-  // ---------------------------------------------------------------------------
-  // 2) Build a map from date string => blocked count, starting at 0 for all days
-  // ---------------------------------------------------------------------------
   const dateToCount: Record<string, number> = {};
   dateLabels.forEach(dateStr => {
     dateToCount[dateStr] = 0;
   });
 
-  // ---------------------------------------------------------------------------
-  // 3) Aggregate the actual data into that map
-  // ---------------------------------------------------------------------------
   blockedPostsOverTime.forEach(entry => {
     const dateStr = new Date(entry.timestamp).toLocaleDateString();
     if (dateStr in dateToCount) {
@@ -65,10 +82,6 @@ const OverTimeStatisticsTab: FC = () => {
     }
   });
 
-  // ---------------------------------------------------------------------------
-  // 4) Convert to an array that Recharts will consume. The array is in ascending
-  //    chronological order because of how we constructed dateLabels above.
-  // ---------------------------------------------------------------------------
   const chartData = dateLabels.map(dateStr => ({
     date: dateStr,
     count: dateToCount[dateStr],
@@ -90,9 +103,9 @@ const OverTimeStatisticsTab: FC = () => {
         <LineChart data={chartData}>
           <XAxis dataKey="date" />
           <YAxis allowDecimals={false} />
-          <Tooltip />
+          <Tooltip content={<CustomLineTooltip />} />
           <Legend />
-          <Line type="monotone" dataKey="count" name="Blocked Posts" stroke="#8884d8" />
+          <Line type="monotone" dataKey="count" name="Blocked Posts" stroke="#8884d8" animationDuration={500} />
         </LineChart>
       </ResponsiveContainer>
     </Box>

@@ -25,6 +25,7 @@ interface SiteOptionProps {
   updateSiteSettings: (siteKey: string, siteSettings: SiteSettings, newSettings?: ExtensionSettings) => void;
   updateFilteredAuthors: (updatedSiteConfig: SiteConfig) => void;
   selectedAuthor?: string;
+  selectedSiteKey?: string;
   onAuthorFocus?: () => void;
   enableDEIFiltering: boolean;
 }
@@ -35,6 +36,7 @@ const SiteOption: React.FC<SiteOptionProps> = ({
   updateSiteSettings,
   updateFilteredAuthors,
   selectedAuthor,
+  selectedSiteKey,
   onAuthorFocus,
   enableDEIFiltering,
 }) => {
@@ -82,9 +84,6 @@ const SiteOption: React.FC<SiteOptionProps> = ({
   };
 
   const confirmReset = async () => {
-    // Reset site settings
-    //await updateSiteSettings(siteConfig.siteKey, { enabled: false });
-
     // Reset authors to default for this site
     const defaultSiteConfig = initialFilteredAuthors.find(config => config.siteKey === siteConfig.siteKey);
 
@@ -96,12 +95,10 @@ const SiteOption: React.FC<SiteOptionProps> = ({
     // (This reverts any custom authors the user added).
     await updateFilteredAuthors({
       ...defaultSiteConfig,
-      // If you need extra merging logic, do it here. By default, we simply copy the array:
       authors: [...defaultSiteConfig.authors],
     });
 
     // 2) If DEI filtering is on, set each non-DEI author to "false" and each DEI author to "true"
-    //    in the global authorPreferences.
     if (enableDEIFiltering) {
       const allSettings: ExtensionSettings = await getSettings();
 
@@ -111,9 +108,9 @@ const SiteOption: React.FC<SiteOptionProps> = ({
       defaultSiteConfig.authors.forEach(author => {
         const authorPrefKey = `${siteConfig.siteKey}:${author.name}`;
         if (author.dei) {
-          updatedPrefs[authorPrefKey] = true; // keep on (filtered)
+          updatedPrefs[authorPrefKey] = true;
         } else {
-          updatedPrefs[authorPrefKey] = false; // turn off (not filtered)
+          updatedPrefs[authorPrefKey] = false;
         }
       });
 
@@ -124,14 +121,12 @@ const SiteOption: React.FC<SiteOptionProps> = ({
       };
       await saveSettings(newSettings);
     } else {
-      // If DEI filtering is off, do your normal "default" logic.
-      // For example, set them all to "true."
+      // If DEI filtering is off, set them all to false
       const allSettings: ExtensionSettings = await getSettings();
       const updatedPrefs = { ...allSettings.authorPreferences };
 
       defaultSiteConfig.authors.forEach(author => {
         const authorPrefKey = `${siteConfig.siteKey}:${author.name}`;
-        // Suppose your default is "true" (filtered) for all authors:
         updatedPrefs[authorPrefKey] = false;
       });
 
@@ -201,13 +196,14 @@ const SiteOption: React.FC<SiteOptionProps> = ({
         {enabled && (
           <>
             <Typography variant="subtitle1" sx={{ mt: 2 }}>
-              Authors:
+              Reviewers:
             </Typography>
             <AuthorList
               siteKey={siteConfig.siteKey}
               authors={siteConfig.authors}
               updateAuthors={updateAuthors}
               selectedAuthor={selectedAuthor}
+              selectedSiteKey={selectedSiteKey}
               onAuthorFocus={onAuthorFocus}
               enableDEIFiltering={enableDEIFiltering}
             />

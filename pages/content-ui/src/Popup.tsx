@@ -16,9 +16,9 @@ const Popup: React.FC = () => {
 
   return (
     <div className="bg-blue-700 flex items-center justify-center p-1">
-      <div className="bg-white rounded shadow-lg max-w-lg w-full p-2">
-        <h1 className="text-base font-bold text-center">Gamer's Choice Filter</h1>
-        <h2 className="text-sm font-semibold mb-1 text-center">
+      <div className="bg-gray-900 rounded shadow-lg max-w-lg w-full p-2">
+        <h1 className="text-base text-white font-bold text-center">Gamer's Choice Filter</h1>
+        <h2 className="text-sm text-white font-semibold mb-1 text-center">
           {enableDEIFiltering ? 'DEI' : 'Blocked Reviewer'} Detected
         </h2>
         <div className="flex justify-center space-x-4">

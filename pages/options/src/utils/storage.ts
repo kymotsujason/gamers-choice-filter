@@ -15,8 +15,8 @@ export interface ExtensionSettings {
   authorPreferences: AuthorPreference;
   sites: Record<string, SiteSettings>;
   filteredAuthors: SiteConfig[];
-  deiSitesBackup?: Record<string, SiteSettings>; // Backup for sites
-  deiAuthorsBackup?: AuthorPreference; // Backup for DEI authors
+  deiSitesBackup?: Record<string, SiteSettings>;
+  deiAuthorsBackup?: AuthorPreference;
 }
 
 export const getSettings = (): Promise<ExtensionSettings> => {

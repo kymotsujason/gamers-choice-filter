@@ -19,7 +19,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { SiteConfig } from '../data/filteredAuthors';
 
 interface SummaryProps {
-  setCurrentTab: (tab: string, siteKey?: string, authorName?: string) => void;
+  setCurrentTab: (siteKey?: string, authorName?: string) => void;
 }
 
 const Summary: React.FC<SummaryProps> = ({ setCurrentTab }) => {
@@ -53,10 +53,8 @@ const Summary: React.FC<SummaryProps> = ({ setCurrentTab }) => {
     };
   }, []);
 
-  // ... rest of the component code remains the same ...
-
   if (!settings) {
-    return null; // Or a loading indicator if you prefer
+    return null;
   }
 
   const { sites, authorPreferences, filteredAuthors } = settings;
@@ -106,7 +104,7 @@ const Summary: React.FC<SummaryProps> = ({ setCurrentTab }) => {
     const isExpanded = expandedSites[siteKey] || false;
 
     const handleSiteClick = () => {
-      setCurrentTab('sites', siteKey);
+      setCurrentTab(siteKey, undefined);
     };
 
     const toggleExpand = () => {
@@ -150,15 +148,16 @@ const Summary: React.FC<SummaryProps> = ({ setCurrentTab }) => {
                 <ListItem
                   key={`${siteKey}-${author.name}`}
                   onClick={() => {
-                    setCurrentTab('sites', siteKey, author.name);
-                  }}>
+                    setCurrentTab(siteKey, author.name);
+                  }}
+                  sx={{ cursor: 'pointer' }}>
                   <ListItemText primary={author.name} />
                 </ListItem>
               ))}
             </List>
           ) : (
             <Typography variant="body2" color="textSecondary" sx={{ pl: 4 }}>
-              No authors are being filtered on this site.
+              No reviewers are being filtered on this site.
             </Typography>
           )}
         </Collapse>
@@ -177,13 +176,15 @@ const Summary: React.FC<SummaryProps> = ({ setCurrentTab }) => {
         onChange={e => setSearchQuery(e.target.value)}
         variant="outlined"
         fullWidth
-        sx={{ mb: 2 }}
       />
+      <Typography variant="caption" gutterBottom align="center">
+        Click a reviewer or website to quickly navigate
+      </Typography>
       {filteredSites.length > 0 ? (
         <List dense>{summaryContent}</List>
       ) : (
         <Typography variant="body2" color="textSecondary">
-          No matching sites or authors found.
+          No matching sites or reviewers found.
         </Typography>
       )}
     </Paper>
