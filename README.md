@@ -2,7 +2,7 @@
 
 Your Reviews, Your Rules. Tired of sifting through endless game reviews that just aren’t speaking your language? Gamer's Choice Filter puts you in control—tailor your review feed to match what you truly care about. Whether it’s letting the critique fly smoothly or filtering out reviews heavy on DEI commentary, we’ve got you covered.
 
-If you have any bugs to report or features to request, create an issue [here](https://github.com/kymotsujason/gamers-choice-filter/issues/new)
+If you have any bugs to report or features to request, create an issue [here](https://github.com/kymotsujason/gamers-choice-filter/issues)
 
 ![alt text](/previews/image1.png "Preview")
 
