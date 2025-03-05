@@ -71,7 +71,7 @@ const manifest = {
         '*://*.gamesradar.com/*',
       ],
       run_at: 'document_start',
-      js: ['content/index.iife.js', 'content/index.iife_dev.js'],
+      js: ['content/index.iife.js'],
     },
     {
       matches: [
@@ -91,25 +91,6 @@ const manifest = {
         '*://*.gamesradar.com/*',
       ],
       js: ['content-ui/index.iife.js'],
-    },
-    {
-      matches: [
-        '*://*.ign.com/*',
-        '*://*.kotaku.com/*',
-        '*://*.butwhytho.net/*',
-        '*://*.player2.net.au/*',
-        '*://*.pcgamer.com/*',
-        '*://*.wccftech.com/*',
-        '*://*.mmorpg.com/*',
-        '*://*.gamingtrend.com/*',
-        '*://*.windowscentral.com/*',
-        '*://*.dotesports.com/*',
-        '*://*.gamecritics.com/*',
-        '*://*.polygon.com/*',
-        '*://*.digitaltrends.com/*',
-        '*://*.gamesradar.com/*',
-      ],
-      js: ['content-ui/index.iife_dev.js'],
     },
   ],
 } satisfies chrome.runtime.ManifestV3;
