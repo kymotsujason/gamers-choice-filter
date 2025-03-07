@@ -10,7 +10,7 @@ If you have any bugs to report or features to request, create an issue [here](ht
 
 ## Getting Started
 
-You can install the chrome extension through the Chrome Web Store here (pending review) or locally here (pending upload).
+You can install the chrome extension through the Chrome Web Store here (pending review) or locally [here](https://github.com/kymotsujason/gamers-choice-filter/releases/latest).
 
 Currently supported websites:
 
@@ -35,7 +35,7 @@ Currently supported websites:
 
 ## Built With
 
-* [Chrome Extension Boilerplate]([Jonghakseo](https://github.com/Jonghakseo)) - A boilerplate that helps with creating Chrome/Firefox extensions usiung React and Typescript
+* [Chrome Extension Boilerplate](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite) - A boilerplate that helps with creating Chrome/Firefox extensions usiung React and Typescript
 
 ## Contributing
 
