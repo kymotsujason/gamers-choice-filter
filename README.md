@@ -10,7 +10,7 @@ If you have any bugs to report or features to request, create an issue [here](ht
 
 ## Getting Started
 
-You can install the chrome extension through the Chrome Web Store here (pending review) or locally [here](https://github.com/kymotsujason/gamers-choice-filter/releases/latest).
+You can install the chrome extension through the Chrome Web Store [here](https://chromewebstore.google.com/detail/mcmhlckeaiofpmkcpnjijldhkcmaneaf?utm_source=item-share-cb) or locally [here](https://github.com/kymotsujason/gamers-choice-filter/releases/latest).
 
 Currently supported websites:
 
